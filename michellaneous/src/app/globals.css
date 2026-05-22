@@ -1,0 +1,164 @@
+@import "tailwindcss";
+
+/* ─── Design tokens ─────────────────────────────────────── */
+
+:root {
+  /* Palette */
+  --parchment:     #d1ceb7;
+  --stamp-paper:   #f6f1e4;
+  --stamp-border:  #c8a870;
+  --ink:           #1a1208;
+  --ink-muted:     #8a6a3a;
+  --ink-faint:     #b8a080;
+
+  /* Fonts (vars set by next/font on <html>) */
+  --font-display:  var(--font-cormorant);
+  --font-stamp:    var(--font-playfair);
+  --font-type:     var(--font-special-elite);
+  --font-hand:     var(--font-caveat);
+  --font-ui:       var(--font-inter);
+}
+
+/* ─── Tailwind v4 theme registration ────────────────────── */
+/* These become Tailwind utilities: bg-parchment, text-ink, font-display, etc. */
+
+@theme inline {
+  --color-parchment:    var(--parchment);
+  --color-stamp-paper:  var(--stamp-paper);
+  --color-stamp-border: var(--stamp-border);
+  --color-ink:          var(--ink);
+  --color-ink-muted:    var(--ink-muted);
+  --color-ink-faint:    var(--ink-faint);
+
+  --font-display: var(--font-display);
+  --font-stamp:   var(--font-stamp);
+  --font-type:    var(--font-type);
+  --font-hand:    var(--font-hand);
+  --font-ui:      var(--font-ui);
+}
+
+/* ─── Base ───────────────────────────────────────────────── */
+
+/* ─── Cursors ────────────────────────────────────────────── */
+
+/* Default — static MapleStory finger */
+* {
+  cursor: url('https://cdn.cursors-4u.net/previews/maplestory-finger-point-b87c73f1-32.webp') 32 32, auto;
+}
+
+/* Animated finger for interactive elements.
+   CSS animation takes precedence over the * rule above for these elements. */
+@keyframes cursor-anim {
+  0%   { cursor: url("data:image/webp;base64,UklGRmQBAABXRUJQVlA4TFgBAAAvH8AHEJ+hkJEkqfwhV6ER9h4Jgmyb+kNO4QgnyLapP+QVhnBGkSRJ6Zzd5T5eKMAb/h2Q+LHBxw0fA1AAmAAAUOgAKMALKMAEWAEAMOOB/T9JSpUmKSazpYoBYmzbCZS/7i64OyRhP6T/4vQnAwW8H9F/hgHTthGQ7kmu8AABs75vEBmAjv2mfAUfeg18AYbuZ42Arnr1G60LzRfXg0r62QJ0RlHzoehpwWxgHck19Pa5HYLZ8YmOtYZVdRos1aCHzOma6kn8i0NCAY5AqoGMY5G7qTQzXHIgkAT0upaqNV/5IvJdAf4YCKjILLhEskJvm/LUsFlxqpoelH78NBpJANWEu6nQPGyi5HT+URYOoLe7JbCqCYS1yMvKF9WdXISVX2vyfNxOPCpW2MWw4vNx1/WQVy6Jo4CPh2KkZwL4eL/ZhtR5d/P0/ITzccfXqjteYjHq+P8jAA==") 3 3, auto; }
+  50%  { cursor: url("data:image/webp;base64,UklGRlQBAABXRUJQVlA4TEgBAAAvH8AHEJehkJEkqfwhV6ER7oUgyLapP+QUjnCCbJv6Q15hCGcUSZKUztmDmx8O0IZ/ByR+7PDhhocBKABMAABMABReQAEmYAMAwIIH1v9JUqo0STGZLVUMkBxJUiTlMDPTMgw07db/P0dZvXj2jug/A7dtGyk2oN4evzD/4Agwan2lN8BJ+V7Blw4Ao3YJQiluJKkAw6a+voaSAklRkctGyUAKVRJIK5d1I6CxQpGbb1juhybM8uREoXAgh0aYen9/ZxPlbmCUaUlC6u3wyUFeZ7E76MucrAT8MEQgytBGwxN5m2s0JfHi/bdgpxwaWgYueL2RYAk+vPpzE2+8w4uPCn9H7OfCzWLN8TI16tT7u5PwmdzCnk99U5WQInUFuTwu66aKy14KAOH8oDZ2T+D8flyojdzz+PTMcdurmbJT700Yd2vm90wF") 3 3, auto; }
+}
+
+/* Grab cursor while dragging a stamp — aero_move embedded as data URL */
+body.is-grabbing * {
+  cursor: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAD8AAAA/CAYAAABXXxDfAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAB7ElEQVRoge3YzWncQBjG8b9CChh1sLOwBSQlBJIC4hJiV2DIxWfnYMg1p801t6SADXEDht0CDDvpYKaDyUFfIyRiryU0Njw/EOyOPt/5fCUQEREREREREREREREREVlYkfn+caSs+E/5rF7NfcETxGOM9DbvAeJ2t++V/XFHqCok3SbL1fLxGKvnt0mhAwgBFzx2lewJgcOdw2wM7j5QAmcf3sLE588avB3Z4dI/IXTlwXe/Z6qA1089cbIQcMYMKsDS9QAYBj2nbGP++st3rj9/5fave/hgxgP/udvDhPGfo+VjPYEB8OPbLw4by+XFx8UfJEu3Tyezq5tL3FjrG9Mb86lypufI1u1tuq3sYF/721Sh2o0ZXqQcKTtBtuDTth6b9ZeQI/hiXeROLCs5MzweN88P+YcPeZRcwbetf0oF2I1px74HvJ+27ufsf/HofTWrM5Lmwuhs3yQ9zbo/JdPL2e2LdVl2mVyyAf3Ajekqycy10OVMbyvFuiwj0LzRDdg6aAft2u/uA6HJDVZPXytyBw91d20qYVulrAC8e/+md+Dt70MX9Fw3fmYiwKebLVcXZ213HwvcrCznE97snmPwjbjd7bH1O3wauKm7+pTAJ524kJgOg0YdNLzQjxmnWOR7noiIiIiIyIv0Dx7VtFd/LQhtAAAAAElFTkSuQmCC") 16 16, move !important;
+}
+
+/* Grow interactive elements on hover to signal clickability */
+a, button, [role=button] {
+  transition: transform 150ms ease;
+}
+a:hover, button:hover, [role=button]:hover {
+  transform: scale(1.06);
+}
+
+/* Click — animate MapleStory finger once per mousedown */
+body.clicking * {
+  animation: cursor-anim 332ms step-end 1 forwards !important;
+}
+
+body.clicking .city-stamp-span,
+body.clicking .city-stamp-span * {
+  cursor: none !important;
+  animation: none !important;
+}
+
+/* SF city span — always none; !important beats the animation too */
+.city-stamp-span,
+.city-stamp-span * {
+  cursor: none !important;
+  animation: none !important;
+}
+
+/* Bridge cursor — only when NOT grabbing and NOT mid-click.
+   Using :not() means the rule simply doesn't match during those states,
+   so grab and click cursors take over naturally with no specificity fighting. */
+body.is-stamped:not(.is-grabbing):not(.clicking) * {
+  cursor: url('https://cdn.cursors-4u.net/css-previews/maplestory-finger-point-dc6fe790-css.webp') 3 3, auto !important;
+  animation: none !important;
+}
+
+body.is-stamped .city-stamp-span,
+body.is-stamped .city-stamp-span * {
+  cursor: none !important;
+  animation: none !important;
+}
+
+html {
+  background: var(--parchment);
+}
+
+body {
+  background: var(--parchment);
+  color: var(--ink);
+  font-family: var(--font-ui);
+  min-height: 100dvh;
+  position: relative;
+}
+
+/* ─── Tooltip keyframe animations ───────────────────────── */
+
+/* today — drops in with overshoot */
+@keyframes tooltip-bounce {
+  0%   { opacity: 0; transform: translateX(-50%) translateY(8px); }
+  65%  { opacity: 1; transform: translateX(-50%) translateY(-3px); }
+  100% { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+/* week — slides in from left */
+@keyframes tooltip-sweep {
+  0%   { opacity: 0; transform: translateX(calc(-50% - 10px)) translateY(0); }
+  100% { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+/* month — slow patient fade */
+@keyframes tooltip-fade {
+  0%   { opacity: 0; transform: translateX(-50%) translateY(0); }
+  100% { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+/* year — zooms out from small */
+@keyframes tooltip-scale {
+  0%   { opacity: 0; transform: translateX(-50%) translateY(0) scale(0.7); }
+  100% { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
+}
+
+/* ─── Stamp animation ────────────────────────────────────── */
+
+@keyframes stamp-in {
+  from { opacity: 0; transform: scale(0.88) translateY(10px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+
+
+/* Applied directly — tooltip only mounts when hovered (React state) */
+.tooltip-today  { animation: tooltip-bounce 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
+.tooltip-week   { animation: tooltip-sweep  0.35s ease-out forwards; }
+.tooltip-month  { animation: tooltip-fade   0.8s ease forwards; }
+.tooltip-year   { animation: tooltip-scale  0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
+
+/* Paper grain overlay — SVG fractal noise, no image file needed */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200"><filter id="n"><feTurbulence type="fractalNoise" baseFrequency="0.75" numOctaves="4" stitchTiles="stitch"/></filter><rect width="200" height="200" filter="url(%23n)"/></svg>');
+  opacity: 0.04;
+  pointer-events: none;
+  z-index: 9999;
+}

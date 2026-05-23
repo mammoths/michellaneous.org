@@ -10,6 +10,7 @@ export type CounterConfig = {
   bgColor: string
   format: (n: number) => string
   canIncrement?: boolean
+  imageUrl?: string
   data: Record<TimeWindow, number>
   log?: RunEntry[]
 }
@@ -20,6 +21,7 @@ export type BinaryConfig = {
   label: string
   inkColor: string
   bgColor: string
+  imageUrl?: string
   data: { today: boolean; week: number; month: number; year: number }
 }
 
@@ -61,6 +63,7 @@ export const STAMPS: StampConfig[] = [
     label: "pages",
     inkColor: "#3a2010",
     bgColor: "#d4c8b4",
+    imageUrl: "/stamps/reading1.png",
     format: (n) => String(n),
     data: { today: 0, week: 0, month: 0, year: 0 },
   },
@@ -70,6 +73,7 @@ export const STAMPS: StampConfig[] = [
     label: "pilates",
     inkColor: "#1a4030",
     bgColor: "#b4ccbf",
+    imageUrl: "/stamps/pilates1.png",
     data: { today: false, week: 0, month: 0, year: 0 },
   },
   {
@@ -81,19 +85,37 @@ export const STAMPS: StampConfig[] = [
     data: { today: false, week: 0, month: 0, year: 0 },
   },
   {
-    id: "meili",
+    id: "building",
     type: "binary",
-    label: "meili",
-    inkColor: "#7a4a10",
-    bgColor: "#dccca8",
+    label: "building",
+    inkColor: "#3a2a5a",
+    bgColor: "#cabcd4",
     data: { today: false, week: 0, month: 0, year: 0 },
   },
   {
-    id: "biked",
+    id: "coffee",
     type: "binary",
-    label: "biked",
-    inkColor: "#2a4020",
-    bgColor: "#c8d4b8",
+    label: "coffee",
+    inkColor: "#5a3010",
+    bgColor: "#d4b896",
+    imageUrl: "/stamps/coffee.png",
+    data: { today: false, week: 0, month: 0, year: 0 },
+  },
+  {
+    id: "boardgames",
+    type: "binary",
+    label: "boardgames",
+    inkColor: "#2a3a5a",
+    bgColor: "#b8c4d8",
+    imageUrl: "/stamps/boardgames1.png",
+    data: { today: false, week: 0, month: 0, year: 0 },
+  },
+  {
+    id: "crabbing",
+    type: "binary",
+    label: "crabbing",
+    inkColor: "#5a2a10",
+    bgColor: "#d4b8a0",
     data: { today: false, week: 0, month: 0, year: 0 },
   },
 ]

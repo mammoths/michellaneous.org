@@ -30,6 +30,7 @@ const BRIDGE_IMG = "https://cdn.cursors-4u.net/previews/golden-gate-bridge-21232
 
 // ─── Michelle mode ─────────────────────────────────────────
 const SECRET = ["s", "c", "h", "m", "e", "h"]
+const MLEM   = ["m", "l", "e", "m"]
 const WORD   = "michellaneous"
 
 const LETTER_NOTES: Record<string, string> = {
@@ -127,9 +128,10 @@ type Props = {
   fadingOut?: boolean
   onMichelleUnlock?: () => void
   onMichelleLock?: () => void
+  onPlannerUnlock?: () => void
 }
 
-export default function Header({ timeWindow, onCycleWindow, onSequenceComplete, fadingOut = false, onMichelleUnlock, onMichelleLock }: Props) {
+export default function Header({ timeWindow, onCycleWindow, onSequenceComplete, fadingOut = false, onMichelleUnlock, onMichelleLock, onPlannerUnlock }: Props) {
   const [typedChars, setTypedChars] = useState(0)
   const [pillDone, setPillDone] = useState(false)
   const [pillPermanent, setPillPermanent] = useState(true)
@@ -146,7 +148,8 @@ export default function Header({ timeWindow, onCycleWindow, onSequenceComplete, 
   const [statusMessage, setStatusMessage] = useState<string | null>(null)
   const [highlightSpanIdx, setHighlightSpanIdx] = useState<number | null>(null)
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const tapBuffer = useRef<string[]>([])
+  const tapBuffer  = useRef<string[]>([])
+  const mlemBuffer = useRef<string[]>([])
 
   // raindrops
   const [raindrops, setRaindrops] = useState<Raindrop[]>([])
@@ -188,6 +191,16 @@ export default function Header({ timeWindow, onCycleWindow, onSequenceComplete, 
         setMichelleUnlocked(true)
         onMichelleUnlock?.()
         showToast("welcome back, Michelle!", 2800)
+      }
+    }
+
+    // mlem → open planner (Michelle mode only)
+    if (michelleUnlocked) {
+      const mlemNext = [...mlemBuffer.current, letter].slice(-4)
+      mlemBuffer.current = mlemNext
+      if (mlemNext.length === 4 && mlemNext.every((l, i) => l === MLEM[i])) {
+        mlemBuffer.current = []
+        onPlannerUnlock?.()
       }
     }
   }

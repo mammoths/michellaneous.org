@@ -14,9 +14,10 @@ type Props = {
 }
 
 const ROTATIONS: Record<string, number> = {
-  run:  -3,
-  book:  2,
-  jobs: -1,
+  run:      -3,
+  book:      2,
+  building: -1,
+  crabbing:  2,
 }
 
 const numStyle = (inkColor: string): React.CSSProperties => ({
@@ -28,15 +29,25 @@ const numStyle = (inkColor: string): React.CSSProperties => ({
   display: "block",
 })
 
-const AERIAL_IMAGES = ["/stamps/aerial1.png", "/stamps/aerial2.png", "/stamps/aerial3.png"]
+// Stamps with multiple variants — public view picks one randomly on mount
+const MULTI_IMAGES: Record<string, string[]> = {
+  aerials:  ["/stamps/aerial1.png", "/stamps/aerial2.png", "/stamps/aerial3.png", "/stamps/aerials4.png", "/stamps/aerials5.png"],
+  pullups:  ["/stamps/pullup1.png", "/stamps/pullup2.png"],
+  crabbing: ["/stamps/crabbing1.png", "/stamps/crabbing2.png", "/stamps/crabbing3.png"],
+  building: ["/stamps/building.png", "/stamps/building2.png"],
+}
+
+function pickImage(config: StampConfig): string | undefined {
+  const multi = MULTI_IMAGES[config.id]
+  if (multi) return multi[Math.floor(Math.random() * multi.length)]
+  return config.imageUrl
+}
 
 export default function Stamp({ config, timeWindow, michelleMode = false }: Props) {
   const [todayCount, setTodayCount] = useState(
     config.type === "counter" ? config.data.today : 0
   )
-  const [aerialImage] = useState(() =>
-    AERIAL_IMAGES[Math.floor(Math.random() * AERIAL_IMAGES.length)]
-  )
+  const [stampImage] = useState(() => pickImage(config))
 
   const rotation = ROTATIONS[config.id]
 
@@ -53,7 +64,8 @@ export default function Stamp({ config, timeWindow, michelleMode = false }: Prop
     const showPlus = michelleMode && config.canIncrement && timeWindow === "today"
 
     return (
-      <StampShell inkColor={config.inkColor} bgColor={config.bgColor} label={config.label} rotation={rotation}>
+      <StampShell inkColor={config.inkColor} bgColor={config.bgColor} label={config.label}
+        imageUrl={stampImage} rotation={rotation}>
         <div style={{ position: "relative", display: "inline-block" }}>
           <span style={numStyle(config.inkColor)}>{config.format(value)}</span>
           {showPlus && (
@@ -78,8 +90,8 @@ export default function Stamp({ config, timeWindow, michelleMode = false }: Prop
 
   return (
     <StampShell
-      inkColor={config.inkColor} bgColor={config.bgColor} label={config.label} rotation={rotation}
-      imageUrl={config.id === "aerials" ? aerialImage : undefined}
+      inkColor={config.inkColor} bgColor={config.bgColor} label={config.label}
+      imageUrl={stampImage} rotation={rotation}
     >
       {showCount && (
         <span style={numStyle(config.inkColor)}>

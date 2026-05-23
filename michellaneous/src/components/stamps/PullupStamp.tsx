@@ -19,6 +19,7 @@ type Props = {
   timeWindow: TimeWindow
   rotation?: number
   michelleMode?: boolean
+  onRepLogged?: () => void
 }
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
@@ -167,7 +168,7 @@ function PullupLogFace({ data, onEdit, onDelete, michelleMode }: {
 
 // ─── PullupStamp ─────────────────────────────────────────────────────────────
 
-export default function PullupStamp({ config, timeWindow, rotation, michelleMode = false }: Props) {
+export default function PullupStamp({ config, timeWindow, rotation, michelleMode = false, onRepLogged }: Props) {
   const [data, setData]         = useState<PullupData>({ entries: [] })
   const [flipped, setFlipped]   = useState(false)
   const [bouncing, setBouncing] = useState(false)
@@ -204,6 +205,7 @@ export default function PullupStamp({ config, timeWindow, rotation, michelleMode
         playTick()
         setBouncing(true); setTimeout(() => setBouncing(false), 260)
         setBubble({ id: Date.now() }); setTimeout(() => setBubble(null), 850)
+        onRepLogged?.()
       }, 260)
     }
   }

@@ -15,6 +15,7 @@ type Props = {
   timeWindow: TimeWindow
   rotation?: number
   michelleMode?: boolean
+  onMilesLogged?: () => void
 }
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
@@ -199,7 +200,7 @@ function NumberPad({ value, onChange, onLog }: { value: string; onChange: (v: st
 
 // ─── RunStamp ─────────────────────────────────────────────────────────────────
 
-export default function RunStamp({ config, timeWindow, rotation, michelleMode = false }: Props) {
+export default function RunStamp({ config, timeWindow, rotation, michelleMode = false, onMilesLogged }: Props) {
   const [logs, setLogs]     = useState<RunEntry[]>(config.log ?? [])
   const [flipped, setFlipped] = useState(false)
   const [padOpen, setPadOpen] = useState(false)
@@ -240,8 +241,9 @@ export default function RunStamp({ config, timeWindow, rotation, michelleMode = 
     const updated = addMiles(logs, todayISO(), miles)
     setLogs(updated); persistLogs(updated)
     setPadOpen(false)
-    setLogKey(k => k + 1)  // trigger the fanfare
+    setLogKey(k => k + 1)
     setBouncing(true); setTimeout(() => setBouncing(false), 260)
+    onMilesLogged?.()
   }
 
   function handleEdit(date: string, miles: number) {

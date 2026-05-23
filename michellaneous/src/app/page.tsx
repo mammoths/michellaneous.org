@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import { WINDOWS, type TimeWindow } from "@/lib/time"
 import Header from "@/components/Header"
 import StampGrid from "@/components/StampGrid"
+import PlannerView from "@/components/planner/PlannerView"
 
 export default function Home() {
   const [windowIdx, setWindowIdx] = useState(0)
@@ -11,6 +12,7 @@ export default function Home() {
   const [fadingOut, setFadingOut] = useState(false)
   const [michelleMode, setMichelleMode] = useState(false)
   const [stampResetKey, setStampResetKey] = useState(0)
+  const [plannerOpen, setPlannerOpen] = useState(false)
   const timeWindow: TimeWindow = WINDOWS[windowIdx]
 
   useEffect(() => {
@@ -32,6 +34,7 @@ export default function Home() {
   }
 
   return (
+    <>
     <main className="flex flex-col items-center px-4 py-16 min-h-dvh gap-12">
       <Header
         timeWindow={timeWindow}
@@ -39,6 +42,7 @@ export default function Home() {
         fadingOut={fadingOut}
         onSequenceComplete={() => setCardsVisible(true)}
         onMichelleUnlock={() => setMichelleMode(true)}
+        onPlannerUnlock={() => setPlannerOpen(true)}
         onMichelleLock={() => {
           setMichelleMode(false)
           setCardsVisible(false)
@@ -58,5 +62,8 @@ export default function Home() {
         <StampGrid key={stampResetKey} timeWindow={timeWindow} michelleMode={michelleMode} />
       </div>
     </main>
+
+    {plannerOpen && <PlannerView onClose={() => { setPlannerOpen(false); setStampResetKey(k => k + 1) }} />}
+    </>
   )
 }

@@ -10,7 +10,7 @@ import StampShell from "./stamps/StampShell"
 import RunStamp from "./stamps/RunStamp"
 import PullupStamp from "./stamps/PullupStamp"
 import {
-  plannerStore, getTodayDayKey, getTodayISO,
+  plannerStore, getTodayDayKey, getTodayISO, getWeekISO, placedFor,
   type StampTemplate, type SlotConfig, type Completion, type Zone,
 } from "@/lib/planner"
 import type { CounterConfig } from "@/data/stamps"
@@ -204,13 +204,17 @@ export default function StampGrid({ timeWindow, michelleMode = false }: Props) {
   const [plannerStamps, setPlannerStamps] = useState<StampTemplate[]>([])
   const [todaySlots, setTodaySlots]       = useState<{ zone: Zone; slot: SlotConfig; stamp: StampTemplate }[]>([])
   const [completions, setCompletions]     = useState<Completion[]>([])
+  const [editMode, setEditMode]           = useState(false)
 
   useEffect(() => {
     const base = STAMPS.filter((s) => isVisible(s, timeWindow))
     if (timeWindow === "today") {
       const comps    = plannerStore.loadCompletions()
       const todayStr = getTodayISO()
-      const completedIds = new Set(comps.filter(c => c.date === todayStr).map(c => c.stamp_id))
+      // Never surface private completions in the public grid
+      const completedIds = new Set(
+        comps.filter(c => c.date === todayStr && !c.is_private).map(c => c.stamp_id)
+      )
       const extra = STAMPS.filter(s => completedIds.has(s.id) && !base.some(b => b.id === s.id))
       setVisible(shuffle([...base, ...extra]))
     } else {
@@ -220,16 +224,26 @@ export default function StampGrid({ timeWindow, michelleMode = false }: Props) {
 
   useEffect(() => {
     if (!michelleMode || timeWindow !== "today") return
-    const stamps = plannerStore.loadStamps()
-    const tmpl   = plannerStore.loadTemplate()
-    const comps  = plannerStore.loadCompletions()
-    const dayKey = getTodayDayKey()
-    const slots  = tmpl.days[dayKey]?.slots ?? []
+    const stamps    = plannerStore.loadStamps()
+    const placedAll = plannerStore.loadPlaced()
+    const comps     = plannerStore.loadCompletions()
+    const dayKey    = getTodayDayKey()
+    const week      = getWeekISO()
+    // Pull today's stamps from the v1 PlacedStamp schema, excluding the staging "repeat" zone.
+    const todayPlaced = placedFor(placedAll, week, dayKey).filter(p => p.zone !== "repeat")
 
-    const entries = slots.flatMap(slot => {
-      const stamp = stamps.find(s => s.id === slot.stamp_id)
+    const entries = todayPlaced.flatMap(p => {
+      const stamp = stamps.find(s => s.id === p.stamp_id)
       if (!stamp) return []
-      return [{ zone: slot.zone as Zone, slot, stamp }]
+      const slot: SlotConfig = {
+        id: p.id,
+        stamp_id: p.stamp_id,
+        zone: p.zone as Zone,
+        target_value: p.target_value,
+        target_unit: p.target_unit,
+        is_private: p.is_private,
+      }
+      return [{ zone: p.zone as Zone, slot, stamp }]
     })
 
     setPlannerStamps(stamps)
@@ -249,6 +263,8 @@ export default function StampGrid({ timeWindow, michelleMode = false }: Props) {
       return [...prev, c]
     })
     setVisible(prev => {
+      // Private completions never go to public grid
+      if (c.is_private) return prev
       const alreadyShown = prev.some(s => s.id === c.stamp_id)
       if (alreadyShown) return prev
       const cfg = STAMPS.find(s => s.id === c.stamp_id)
@@ -296,6 +312,25 @@ export default function StampGrid({ timeWindow, michelleMode = false }: Props) {
       {showPlanner && (
         <div style={{ display: "flex", flexDirection: "column", gap: 28, width: "100%", maxWidth: 900 }}>
 
+          {/* ✎ edit mode toggle */}
+          <div style={{ display: "flex", justifyContent: "flex-end" }}>
+            <button
+              onClick={() => setEditMode(m => !m)}
+              style={{
+                fontFamily: "var(--font-hand)",
+                fontSize: 14,
+                color: editMode ? "#C0392B" : SAGE,
+                opacity: editMode ? 1 : 0.6,
+                cursor: "pointer",
+                userSelect: "none",
+                letterSpacing: "0.5px",
+                transition: "color 200ms ease, opacity 200ms ease",
+              }}
+            >
+              {editMode ? "done editing" : "✎ edit"}
+            </button>
+          </div>
+
           {/* morning / afternoon / evening zones */}
           {hasPlanned && ZONE_KEYS.map(zone => {
             const zoneSlots = todaySlots.filter(e => e.zone === zone)
@@ -312,6 +347,7 @@ export default function StampGrid({ timeWindow, michelleMode = false }: Props) {
                       completions={completions}
                       onComplete={handleComplete}
                       onUncomplete={handleUncomplete}
+                      editMode={editMode}
                     />
                   ))}
                 </div>

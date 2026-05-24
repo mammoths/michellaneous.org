@@ -6,6 +6,7 @@ import type { TimeWindow } from "@/lib/time"
 import StampShell from "./StampShell"
 import RunStamp from "./RunStamp"
 import PullupStamp from "./PullupStamp"
+import SessionLog from "./SessionLog"
 
 type Props = {
   config: StampConfig
@@ -88,10 +89,16 @@ export default function Stamp({ config, timeWindow, michelleMode = false }: Prop
   const count = timeWindow === "today" ? null : config.data[timeWindow]
   const showCount = count !== null && count > 0
 
+  const sessionLog = (config.type === "binary" || config.type === "session")
+    ? <SessionLog stampId={config.id} inkColor={config.inkColor} />
+    : undefined
+
   return (
     <StampShell
       inkColor={config.inkColor} bgColor={config.bgColor} label={config.label}
       imageUrl={stampImage} rotation={rotation}
+      backFillContent={sessionLog}
+      backLabel="log"
     >
       {showCount && (
         <span style={numStyle(config.inkColor)}>

@@ -221,6 +221,7 @@ export default function NorthStar({ goals, stamps, budgets, onGoalsChange, width
   return (
     <div style={{
       width: "100%",
+      flex: 1,
       borderLeft: "1px solid rgba(44,26,14,0.1)",
       overflowY: "auto", overflowX: "hidden",
       padding: "12px 12px 16px",

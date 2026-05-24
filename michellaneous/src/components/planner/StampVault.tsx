@@ -1,14 +1,18 @@
 "use client"
 
 import { useState, useId, useRef } from "react"
-import type { StampTemplate, Goal, WeeklyBudget } from "@/lib/planner"
-import { newSlotId } from "@/lib/planner"
+import type { StampTemplate, Goal, WeeklyBudget, PlacedStamp, Completion } from "@/lib/planner"
+import { newSlotId, getWeekISO, runMilesRemaining, runMilesLogged, RUN_BUDGET } from "@/lib/planner"
 import type { DropPayload } from "./CorkBoard"
+import SessionLog from "@/components/stamps/SessionLog"
 
 type Props = {
   stamps: StampTemplate[]
   goals: Goal[]
   budgets: Record<string, WeeklyBudget>
+  placed: PlacedStamp[]
+  completions: Completion[]
+  visibleWeek: string
   onStampsChange: (stamps: StampTemplate[]) => void
   onPointerDragStart: (e: React.MouseEvent, payload: DropPayload) => void
   width: number
@@ -63,10 +67,13 @@ function playFlipSnap() {
 
 // ─── VaultCard ────────────────────────────────────────────────────────────────
 
-function VaultCard({ stamp, goal, budget, onPointerDragStart, cardSize }: {
+function VaultCard({ stamp, goal, budget, runRemaining, runTotal, runLogged, onPointerDragStart, cardSize }: {
   stamp: StampTemplate
   goal?: Goal
   budget?: WeeklyBudget
+  runRemaining?: number   // only for stamp.id === "run", planning state
+  runTotal?: number       // weekly budget total
+  runLogged?: number      // miles actually logged this week
   onPointerDragStart: (e: React.MouseEvent, payload: DropPayload) => void
   cardSize: number
 }) {
@@ -102,11 +109,15 @@ function VaultCard({ stamp, goal, budget, onPointerDragStart, cardSize }: {
       width: W, height: H,
       perspective: W * 5,
       flexShrink: 0,
-      filter: "drop-shadow(1px 3px 5px rgba(0,0,0,0.2))",
-      transition: "filter 120ms ease",
+      filter: runRemaining === 0
+        ? "drop-shadow(0 0 8px rgba(192,57,43,0.55)) drop-shadow(1px 3px 5px rgba(0,0,0,0.2))"
+        : "drop-shadow(1px 3px 5px rgba(0,0,0,0.2))",
+      transition: "filter 240ms ease",
     }}
     onMouseEnter={e => (e.currentTarget.style.filter = "drop-shadow(1px 5px 8px rgba(0,0,0,0.28))")}
-    onMouseLeave={e => (e.currentTarget.style.filter = "drop-shadow(1px 3px 5px rgba(0,0,0,0.2))")}
+    onMouseLeave={e => (e.currentTarget.style.filter = runRemaining === 0
+      ? "drop-shadow(0 0 8px rgba(192,57,43,0.55)) drop-shadow(1px 3px 5px rgba(0,0,0,0.2))"
+      : "drop-shadow(1px 3px 5px rgba(0,0,0,0.2))")}
     >
       {/* SVG clip defs — outside the flip container so it doesn't get clipped itself */}
       <svg aria-hidden style={{ position: "absolute", width: 0, height: 0, overflow: "hidden" }}>
@@ -172,7 +183,16 @@ function VaultCard({ stamp, goal, budget, onPointerDragStart, cardSize }: {
             <div style={{ fontFamily: "var(--font-stamp)", fontSize: nameFs, letterSpacing: "2px", textTransform: "uppercase", color: INK, opacity: 0.75, lineHeight: 1 }}>
               {stamp.name}
             </div>
-            {budget && (
+            {runRemaining != null && runTotal != null ? (
+              <div style={{ fontFamily: "var(--font-type)", fontSize: statFs, color: TERRA, lineHeight: 1 }}>
+                {runLogged != null && runLogged > 0
+                  ? <>{runLogged} / {runTotal} mi done</>
+                  : runRemaining > 0
+                    ? <>{runRemaining} mi left to plan</>
+                    : <>{runTotal} mi planned</>
+                }
+              </div>
+            ) : budget && (
               <div style={{ fontFamily: "var(--font-type)", fontSize: statFs, color: TERRA, lineHeight: 1 }}>
                 {budget.allocated}/{budget.total + budget.rollover} {goal?.period_unit}
               </div>
@@ -199,8 +219,29 @@ function VaultCard({ stamp, goal, budget, onPointerDragStart, cardSize }: {
             {stamp.name}
           </div>
 
+          {/* Run logged bar — replaces budget bar for run stamps */}
+          {stamp.id === "run" && runTotal != null && (
+            <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
+              <div style={{ fontFamily: "var(--font-type)", fontSize: backSmFs, color: INK, opacity: 0.5, letterSpacing: "0.5px" }}>
+                this week
+              </div>
+              <div style={{ height: 4, background: "rgba(44,26,14,0.12)", borderRadius: 2, overflow: "hidden" }}>
+                <div style={{
+                  height: "100%",
+                  width: `${Math.min(100, Math.round(((runLogged ?? 0) / Math.max(1, runTotal)) * 100))}%`,
+                  background: SAGE,
+                  borderRadius: 2,
+                  transition: "width 300ms ease",
+                }} />
+              </div>
+              <div style={{ fontFamily: "var(--font-type)", fontSize: backSmFs, color: SAGE, lineHeight: 1 }}>
+                {runLogged ?? 0} / {runTotal} mi
+              </div>
+            </div>
+          )}
+
           {/* Budget bar */}
-          {budget && goal && (
+          {stamp.id !== "run" && budget && goal && (
             <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
               <div style={{ fontFamily: "var(--font-type)", fontSize: backSmFs, color: INK, opacity: 0.5, letterSpacing: "0.5px" }}>
                 this week
@@ -222,7 +263,7 @@ function VaultCard({ stamp, goal, budget, onPointerDragStart, cardSize }: {
           )}
 
           {/* Weekly target edit */}
-          {goal && (
+          {goal && stamp.id !== "run" && (
             <div style={{ marginTop: "auto", display: "flex", flexDirection: "column", gap: 3 }}>
               <div style={{ fontFamily: "var(--font-type)", fontSize: backSmFs, color: INK, opacity: 0.45, letterSpacing: "0.5px" }}>
                 weekly target
@@ -250,14 +291,10 @@ function VaultCard({ stamp, goal, budget, onPointerDragStart, cardSize }: {
             </div>
           )}
 
-          {/* No goal */}
-          {!goal && (
-            <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <div style={{ fontFamily: "var(--font-hand)", fontSize: backSmFs, color: INK, opacity: 0.35, textAlign: "center", lineHeight: 1.4 }}>
-                no goal set
-              </div>
-            </div>
-          )}
+          {/* Session log — fills remaining space */}
+          <div style={{ flex: 1, overflow: "hidden", marginTop: goal ? 4 : 0 }}>
+            <SessionLog stampId={stamp.id} inkColor={INK} />
+          </div>
 
           {/* Inner border */}
           <div style={{ position: "absolute", top: INSET, left: INSET, right: INSET, bottom: INSET, border: `0.8px solid ${INK}`, pointerEvents: "none", opacity: 0.15 }} />
@@ -269,8 +306,13 @@ function VaultCard({ stamp, goal, budget, onPointerDragStart, cardSize }: {
 
 // ─── StampVault ───────────────────────────────────────────────────────────────
 
-export default function StampVault({ stamps, goals, budgets, onStampsChange, onPointerDragStart, width }: Props) {
-  const cardSize = Math.max(80, width - 24)
+export default function StampVault({ stamps, goals, budgets, placed, completions, visibleWeek, onStampsChange, onPointerDragStart, width }: Props) {
+  const cardSize    = Math.max(80, width - 24)
+  const currentWeek = getWeekISO()
+  const week        = RUN_BUDGET[visibleWeek] != null ? visibleWeek : currentWeek
+  const runRemain   = RUN_BUDGET[week] != null ? runMilesRemaining(placed, week) : undefined
+  const runTotal    = RUN_BUDGET[week]
+  const runLogged   = runTotal != null ? runMilesLogged(completions, week) : undefined
   const [addingFor, setAddingFor] = useState<StampTemplate["category"] | null>(null)
   const [newName, setNewName]           = useState("")
   const [newUnitType, setNewUnitType]   = useState<StampTemplate["unit_type"]>("session")
@@ -298,6 +340,7 @@ export default function StampVault({ stamps, goals, budgets, onStampsChange, onP
   return (
     <div style={{
       width: "100%",
+      flex: 1,
       overflowY: "auto", overflowX: "hidden",
       padding: "12px 12px",
       scrollbarWidth: "none",
@@ -319,8 +362,17 @@ export default function StampVault({ stamps, goals, budgets, onStampsChange, onP
               {catStamps.map(stamp => {
                 const goal   = goals.find(g => g.stamp_id === stamp.id)
                 const budget = goal ? budgets[goal.id] : undefined
+                const isRun  = stamp.id === "run"
                 return (
-                  <VaultCard key={stamp.id} stamp={stamp} goal={goal} budget={budget} onPointerDragStart={onPointerDragStart} cardSize={cardSize} />
+                  <VaultCard
+                    key={stamp.id}
+                    stamp={stamp} goal={goal} budget={budget}
+                    runRemaining={isRun ? runRemain : undefined}
+                    runTotal={isRun ? runTotal : undefined}
+                    runLogged={isRun ? runLogged : undefined}
+                    onPointerDragStart={onPointerDragStart}
+                    cardSize={cardSize}
+                  />
                 )
               })}
             </div>
